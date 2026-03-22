@@ -361,14 +361,18 @@ export default function AgendaKiosk() {
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
               initialView="listWeek"
               headerToolbar={isMobile ? {
-                left: "prev,next",
+                left: "prev",
                 center: "title",
-                right: "dayGridMonth,listWeek",
+                right: "next",
               } : {
                 left: "prev,next today",
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,listWeek",
               }}
+              footerToolbar={isMobile ? {
+                left: "today",
+                right: "dayGridMonth,listWeek",
+              } : false}
               events={events}
               eventClick={openModal}
               eventClassNames={(arg) => {

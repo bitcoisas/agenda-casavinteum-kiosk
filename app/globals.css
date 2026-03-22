@@ -135,6 +135,14 @@
   padding: 16px 20px 12px !important;
   margin-bottom: 0 !important;
 }
+.fc .fc-footer-toolbar {
+  padding: 10px 16px !important;
+  margin-top: 0 !important;
+  border-top: 1px solid #e5e5ea;
+}
+.dark-theme .fc .fc-footer-toolbar {
+  border-top-color: #27272a;
+}
 .fc .fc-view-harness {
   border-top: 1px solid #e5e5ea;
 }
