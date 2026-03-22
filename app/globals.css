@@ -120,10 +120,10 @@
 /* ─── FullCalendar: variáveis base ─────────────────────────────────────── */
 :root {
   --fc-border-color: #e5e5ea;
-  --fc-event-bg-color: #16a34a;
+  --fc-event-bg-color: rgba(52, 168, 83, 0.72);  /* verde suave, menos saturado */
   --fc-event-border-color: transparent;
   --fc-event-text-color: #ffffff;
-  --fc-today-bg-color: rgba(22, 163, 74, 0.06);
+  --fc-today-bg-color: rgba(22, 163, 74, 0.05);
   --fc-page-bg-color: #ffffff;
   --fc-neutral-bg-color: #f2f2f7;
   --fc-neutral-text-color: #6e6e73;
@@ -250,11 +250,11 @@
   background: rgba(34, 197, 94, 0.12) !important;
 }
 
-/* Eventos no dark — gradiente apenas no grid (mês/semana) */
+/* Eventos no dark — flat, suave como Google/Apple Calendar */
 .dark-theme .fc-daygrid-event,
 .dark-theme .fc-timegrid-event {
-  background: linear-gradient(135deg, #22c55e, #84cc16) !important;
-  color: #09090b !important;
+  background: rgba(52, 168, 83, 0.55) !important;
+  color: #f0fdf4 !important;
 }
 
 /* Lista no dark — fundo escuro simples, texto claro */
@@ -264,35 +264,41 @@
 }
 .dark-theme .fc-list-event-dot { border-color: #22c55e !important; }
 
-/* ─── Badge "Rolando agora" ─────────────────────────────────────────────── */
+/* ─── Ocultar linha de meia hora no timeGrid ────────────────────────────── */
+.fc-timegrid-slot-minor {
+  border-top: none !important;
+}
+
+/* ─── Badge "Rolando agora" via CSS pseudo-element (lista) ─────────────── */
 @keyframes rolando-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.6; transform: scale(0.95); }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
 }
-.rolando-agora {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  animation: rolando-pulse 1.6s ease-in-out infinite;
+@keyframes rolando-dot-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(52,168,83,0.7); }
+  50%       { box-shadow: 0 0 10px 3px rgba(52,168,83,0.35); }
 }
-.rolando-agora::before {
-  content: "";
+
+.fc-list-event.event-rolando-now td.fc-list-event-title::after {
+  content: "Rolando agora";
   display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
-  flex-shrink: 0;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  vertical-align: middle;
+  background: rgba(52, 168, 83, 0.12);
+  color: #34a853;
+  border: 1px solid rgba(52, 168, 83, 0.3);
+  animation: rolando-pulse 1.8s ease-in-out infinite;
+}
+.dark-theme .fc-list-event.event-rolando-now td.fc-list-event-title::after {
+  background: rgba(52, 168, 83, 0.18);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
 }
 
 @layer base {

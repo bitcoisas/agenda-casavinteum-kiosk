@@ -356,19 +356,18 @@ export default function AgendaKiosk() {
               }}
               events={events}
               eventClick={openModal}
-              eventContent={(arg) => {
-                // For non-list views use FullCalendar's default rendering
-                if (!arg.view.type.startsWith("list")) return undefined;
-                const { start, end, allDay, title } = arg.event;
+              eventClassNames={(arg) => {
+                const { start, end, allDay } = arg.event;
                 const isNow = !allDay && !!start && !!end &&
                   currentTime >= start && currentTime < end;
-                return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
-                    <span className="fc-event-title fc-sticky">{title}</span>
-                    {isNow && <span className="rolando-agora">Rolando agora</span>}
-                  </div>
-                );
+                return isNow ? ["event-rolando-now"] : [];
               }}
+              noEventsContent={() => (
+                <div style={{ textAlign: "center", padding: "2rem 1rem", opacity: 0.55, fontSize: "0.9rem" }}>
+                  Não temos eventos nesta data.<br />
+                  Mande sua sugestão para <strong>casa21.btc@gmail.com</strong>
+                </div>
+              )}
               height="85vh"
               locale="pt-br"
               buttonText={{ today: "Hoje", month: "Mês", week: "Semana", list: "Lista" }}
