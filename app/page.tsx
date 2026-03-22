@@ -63,6 +63,7 @@ export default function AgendaKiosk() {
   });
   const [calendarKey] = useState(0);
   const [showGithubQR, setShowGithubQR] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const calendarRef = useRef<any>(null);
   const swipeStartX = useRef<number | null>(null);
 
@@ -82,6 +83,11 @@ export default function AgendaKiosk() {
   const [locationQuery, setLocationQuery] = useState("");
   const [locationResults, setLocationResults] = useState<{ name: string }[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(new Date()), 60_000);
+    return () => clearInterval(tick);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -349,6 +355,22 @@ export default function AgendaKiosk() {
               }}
               events={events}
               eventClick={openModal}
+              eventContent={(arg) => {
+                // Only decorate list view; other views use FC default
+                if (!arg.view.type.startsWith("list")) return undefined;
+                const { start, end, allDay, title } = arg.event;
+                const isNow = !allDay && start && end &&
+                  currentTime >= start && currentTime < end;
+                if (!isNow) return undefined;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%" }}>
+                    <span className="fc-event-title">{title}</span>
+                    <span style={{ color: "#22c55e", fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                      ● Rolando agora
+                    </span>
+                  </div>
+                );
+              }}
               height="85vh"
               locale="pt-br"
               buttonText={{ today: "Hoje", month: "Mês", week: "Semana", list: "Lista" }}

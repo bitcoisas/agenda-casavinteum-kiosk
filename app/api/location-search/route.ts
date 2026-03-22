@@ -28,8 +28,13 @@ export async function GET(req: Request) {
   return NextResponse.json(
     data.map((r: any) => {
       const a = r.address ?? {};
+      // house_number may be absent from structured address but present as the
+      // first comma segment of display_name (e.g. "100, Rua X, Bairro, Cidade…")
+      const firstSegment = r.display_name.split(",")[0].trim();
+      const houseNum = a.house_number ||
+        (/^\d+$/.test(firstSegment) ? firstSegment : null);
       // Build a compact address: "Street, Number, Neighbourhood, City"
-      const street = [a.road || a.pedestrian || a.footway, a.house_number].filter(Boolean).join(", ");
+      const street = [a.road || a.pedestrian || a.footway, houseNum].filter(Boolean).join(", ");
       const parts = [
         street || null,
         a.suburb || a.neighbourhood || a.city_district || a.quarter,
