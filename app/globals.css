@@ -117,6 +117,153 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ─── FullCalendar: variáveis base ─────────────────────────────────────── */
+:root {
+  --fc-border-color: #e5e5ea;
+  --fc-event-bg-color: #16a34a;
+  --fc-event-border-color: transparent;
+  --fc-event-text-color: #ffffff;
+  --fc-today-bg-color: rgba(22, 163, 74, 0.06);
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #f2f2f7;
+  --fc-neutral-text-color: #6e6e73;
+  --fc-list-event-hover-bg-color: #f2f2f7;
+}
+
+/* ─── Espaçamento da toolbar ───────────────────────────────────────────── */
+.fc .fc-header-toolbar {
+  padding: 16px 20px 12px !important;
+  margin-bottom: 0 !important;
+}
+.fc .fc-view-harness {
+  border-top: 1px solid #e5e5ea;
+}
+.dark-theme .fc .fc-view-harness {
+  border-top-color: #27272a;
+}
+
+/* ─── Reset global dos botões ──────────────────────────────────────────── */
+.fc .fc-button, .fc .fc-button-primary {
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+/* ─── Navegação (prev / next / today) — estilo ghost ─────────────────── */
+.fc .fc-prev-button,
+.fc .fc-next-button,
+.fc .fc-today-button {
+  background: transparent !important;
+  color: #16a34a !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 5px 10px !important;
+}
+.fc .fc-prev-button:hover,
+.fc .fc-next-button:hover,
+.fc .fc-today-button:hover:not(:disabled) {
+  background: rgba(22, 163, 74, 0.1) !important;
+  opacity: 1 !important;
+}
+.fc .fc-today-button:disabled {
+  opacity: 0.3 !important;
+  background: transparent !important;
+}
+
+/* ─── Segmented control (Mês / Semana / Lista) ─── Apple style ────────── */
+.fc .fc-header-toolbar .fc-button-group {
+  background: #e9e9ef !important;
+  border-radius: 9px !important;
+  padding: 2px !important;
+  gap: 1px !important;
+}
+.fc .fc-header-toolbar .fc-button-group .fc-button-primary {
+  background: transparent !important;
+  color: #3a3a3c !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  border-radius: 7px !important;
+  padding: 5px 14px !important;
+}
+.fc .fc-header-toolbar .fc-button-group .fc-button-primary.fc-button-active {
+  background: #ffffff !important;
+  color: #1c1c1e !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.07) !important;
+}
+.fc .fc-header-toolbar .fc-button-group .fc-button-primary:hover:not(.fc-button-active) {
+  background: rgba(255,255,255,0.5) !important;
+  opacity: 1 !important;
+}
+
+/* ─── Eventos ──────────────────────────────────────────────────────────── */
+.fc-event { border-radius: 5px !important; font-weight: 500 !important; }
+.fc-daygrid-event { border-radius: 4px !important; font-size: 0.78em !important; }
+.fc-list-event-dot { border-color: #16a34a !important; }
+
+/* ─── Links sem underline ──────────────────────────────────────────────── */
+.fc-list-event-title a,
+.fc-col-header-cell-cushion,
+.fc-daygrid-day-number { text-decoration: none !important; }
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* ─── Tema ESCURO Vinteum (.dark-theme) ──────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────── */
+.dark-theme {
+  --fc-border-color: #27272a;
+  --fc-today-bg-color: rgba(34, 197, 94, 0.08);
+  --fc-page-bg-color: #18181b;
+  --fc-neutral-bg-color: #27272a;
+  --fc-neutral-text-color: #a1a1aa;
+  --fc-list-event-hover-bg-color: rgba(34, 197, 94, 0.08);
+}
+.dark-theme .fc { color: #e4e4e7; }
+.dark-theme .fc-col-header-cell-cushion,
+.dark-theme .fc-daygrid-day-number { color: #a1a1aa !important; }
+.dark-theme .fc-list-day-cushion { background: #18181b !important; }
+.dark-theme .fc-list-event-title a { color: #e4e4e7 !important; }
+.dark-theme .fc-list-day-text,
+.dark-theme .fc-list-day-side-text { color: #71717a !important; }
+
+/* Segmented control no dark */
+.dark-theme .fc .fc-header-toolbar .fc-button-group {
+  background: #27272a !important;
+}
+.dark-theme .fc .fc-header-toolbar .fc-button-group .fc-button-primary {
+  color: #a1a1aa !important;
+}
+.dark-theme .fc .fc-header-toolbar .fc-button-group .fc-button-primary.fc-button-active {
+  background: #3f3f46 !important;
+  color: #f4f4f5 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+}
+
+/* Navegação ghost no dark */
+.dark-theme .fc .fc-prev-button,
+.dark-theme .fc .fc-next-button,
+.dark-theme .fc .fc-today-button { color: #22c55e !important; }
+.dark-theme .fc .fc-prev-button:hover,
+.dark-theme .fc .fc-next-button:hover,
+.dark-theme .fc .fc-today-button:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+
+/* Eventos no dark — gradiente apenas no grid (mês/semana) */
+.dark-theme .fc-daygrid-event,
+.dark-theme .fc-timegrid-event {
+  background: linear-gradient(135deg, #22c55e, #84cc16) !important;
+  color: #09090b !important;
+}
+
+/* Lista no dark — fundo escuro simples, texto claro */
+.dark-theme .fc-list-event {
+  background: #27272a !important;
+  color: #e4e4e7 !important;
+}
+.dark-theme .fc-list-event-dot { border-color: #22c55e !important; }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
