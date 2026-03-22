@@ -1,6 +1,6 @@
 # Agenda Casa Vinteum
 
-A public event kiosk for [Casa Vinteum](https://vinteum.org) — a Bitcoin hub in São Paulo, Brazil.
+A public event kiosk for [Casa Vinteum](https://x.com/casavinteum) — a Bitcoin hub in São Paulo, Brazil.
 
 Built with Next.js (App Router), FullCalendar, Supabase, and Tailwind CSS.
 
