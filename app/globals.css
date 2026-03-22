@@ -264,6 +264,37 @@
 }
 .dark-theme .fc-list-event-dot { border-color: #22c55e !important; }
 
+/* ─── Badge "Rolando agora" ─────────────────────────────────────────────── */
+@keyframes rolando-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.95); }
+}
+.rolando-agora {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  animation: rolando-pulse 1.6s ease-in-out infinite;
+}
+.rolando-agora::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+  flex-shrink: 0;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

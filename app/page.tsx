@@ -63,6 +63,7 @@ export default function AgendaKiosk() {
   });
   const [calendarKey] = useState(0);
   const [showGithubQR, setShowGithubQR] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const calendarRef = useRef<any>(null);
   const swipeStartX = useRef<number | null>(null);
 
@@ -82,6 +83,11 @@ export default function AgendaKiosk() {
   const [locationQuery, setLocationQuery] = useState("");
   const [locationResults, setLocationResults] = useState<{ name: string }[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(new Date()), 30_000);
+    return () => clearInterval(tick);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -119,9 +125,10 @@ export default function AgendaKiosk() {
   }
 
   async function searchLocation() {
-    if (!locationQuery.trim()) return;
+    const q = eventForm.location.trim() || locationQuery.trim();
+    if (!q) return;
     setSearchingLocation(true);
-    const res = await fetch(`/api/location-search?q=${encodeURIComponent(locationQuery)}`);
+    const res = await fetch(`/api/location-search?q=${encodeURIComponent(q)}`);
     setLocationResults(await res.json());
     setSearchingLocation(false);
   }
@@ -349,18 +356,18 @@ export default function AgendaKiosk() {
               }}
               events={events}
               eventClick={openModal}
-              eventDidMount={(arg) => {
-                if (!arg.view.type.startsWith("list")) return;
-                const { start, end, allDay } = arg.event;
-                if (allDay || !start || !end) return;
-                const now = new Date();
-                if (now < start || now >= end) return;
-                const titleEl = arg.el.querySelector(".fc-event-title") ?? arg.el.querySelector("a");
-                if (!titleEl) return;
-                const badge = document.createElement("span");
-                badge.textContent = " ● Rolando agora";
-                badge.style.cssText = "color:#22c55e;font-size:0.7rem;font-weight:700;margin-left:6px;white-space:nowrap;";
-                titleEl.appendChild(badge);
+              eventContent={(arg) => {
+                // For non-list views use FullCalendar's default rendering
+                if (!arg.view.type.startsWith("list")) return undefined;
+                const { start, end, allDay, title } = arg.event;
+                const isNow = !allDay && !!start && !!end &&
+                  currentTime >= start && currentTime < end;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%" }}>
+                    <span className="fc-event-title fc-sticky">{title}</span>
+                    {isNow && <span className="rolando-agora">Rolando agora</span>}
+                  </div>
+                );
               }}
               height="85vh"
               locale="pt-br"
@@ -646,36 +653,33 @@ export default function AgendaKiosk() {
               {/* Local com busca */}
               <div className="mb-3">
                 <label className={`text-xs font-medium mb-1 block ${d ? "text-zinc-400" : "text-gray-500"}`}>Local</label>
-                {eventForm.location ? (
-                  <div className={`flex items-center gap-2 rounded-xl px-4 py-2.5 border ${d ? "bg-zinc-800 border-zinc-700" : "bg-stone-50 border-stone-200"}`}>
-                    <span className={`flex-1 text-sm ${d ? "text-zinc-100" : "text-gray-900"}`}>{eventForm.location}</span>
-                    <button onClick={() => { setEventForm({ ...eventForm, location: "" }); setLocationQuery(""); setLocationResults([]); }} className={`text-xs cursor-pointer ${d ? "text-zinc-500 hover:text-zinc-300" : "text-gray-400 hover:text-gray-700"}`}>✕</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Buscar endereço..."
-                      value={locationQuery}
-                      onChange={(e) => setLocationQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && searchLocation()}
-                      className={`flex-1 rounded-xl px-4 py-2.5 text-sm outline-none border ${d ? "bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500" : "bg-stone-50 border-stone-200 text-gray-900 placeholder:text-gray-400"}`}
-                    />
-                    <button
-                      onClick={searchLocation}
-                      disabled={searchingLocation || !locationQuery.trim()}
-                      className="px-3 py-2.5 rounded-xl bg-green-700 text-white text-sm font-medium cursor-pointer hover:bg-green-800 disabled:opacity-40 transition-colors"
-                    >
-                      {searchingLocation ? "..." : "Buscar"}
-                    </button>
-                  </div>
-                )}
-                {locationResults.length > 0 && !eventForm.location && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Digite ou busque o endereço..."
+                    value={eventForm.location}
+                    onChange={(e) => {
+                      setEventForm({ ...eventForm, location: e.target.value });
+                      setLocationQuery(e.target.value);
+                      setLocationResults([]);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") searchLocation(); }}
+                    className={`flex-1 rounded-xl px-4 py-2.5 text-sm outline-none border ${d ? "bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500" : "bg-stone-50 border-stone-200 text-gray-900 placeholder:text-gray-400"}`}
+                  />
+                  <button
+                    onClick={searchLocation}
+                    disabled={searchingLocation || !eventForm.location.trim()}
+                    className="px-3 py-2.5 rounded-xl bg-green-700 text-white text-sm font-medium cursor-pointer hover:bg-green-800 disabled:opacity-40 transition-colors"
+                  >
+                    {searchingLocation ? "..." : "Buscar"}
+                  </button>
+                </div>
+                {locationResults.length > 0 && (
                   <ul className={`mt-1 rounded-xl border overflow-hidden text-sm ${d ? "bg-zinc-800 border-zinc-700" : "bg-white border-stone-200 shadow-md"}`}>
                     {locationResults.map((r, i) => (
                       <li
                         key={i}
-                        onClick={() => { setEventForm({ ...eventForm, location: r.name }); setLocationResults([]); setLocationQuery(""); }}
+                        onClick={() => { setEventForm({ ...eventForm, location: r.name }); setLocationResults([]); }}
                         className={`px-4 py-2.5 cursor-pointer truncate ${d ? "text-zinc-200 hover:bg-zinc-700" : "text-gray-800 hover:bg-stone-50"}`}
                       >
                         {r.name}

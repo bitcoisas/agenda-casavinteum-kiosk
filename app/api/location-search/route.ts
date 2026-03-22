@@ -25,6 +25,10 @@ export async function GET(req: Request) {
   );
   const data = await res.json();
 
+  // If the user's query contains a number, carry it into results when
+  // Nominatim doesn't return a house_number (common for Brazilian addresses).
+  const queryNum = q.match(/\b(\d+)\b/)?.[1] ?? null;
+
   return NextResponse.json(
     data.map((r: any) => {
       const a = r.address ?? {};
@@ -32,7 +36,8 @@ export async function GET(req: Request) {
       // first comma segment of display_name (e.g. "100, Rua X, Bairro, Cidade…")
       const firstSegment = r.display_name.split(",")[0].trim();
       const houseNum = a.house_number ||
-        (/^\d+$/.test(firstSegment) ? firstSegment : null);
+        (/^\d+$/.test(firstSegment) ? firstSegment : null) ||
+        queryNum;
       // Build a compact address: "Street, Number, Neighbourhood, City"
       const street = [a.road || a.pedestrian || a.footway, houseNum].filter(Boolean).join(", ");
       const parts = [
