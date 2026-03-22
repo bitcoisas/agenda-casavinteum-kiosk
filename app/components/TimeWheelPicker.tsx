@@ -54,7 +54,7 @@ function ScrollColumn({
   disabled?: Set<string>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const programmatic = useRef(false);
 
   useEffect(() => {
