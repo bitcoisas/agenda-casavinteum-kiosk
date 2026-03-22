@@ -56,14 +56,13 @@ export default function AgendaKiosk() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventModal | null>(null);
   const [showQR, setShowQR] = useState(false);
-  // Default to dark mode outside 06:00–18:00 local time
-  const [isDark, setIsDark] = useState(() => {
-    const h = new Date().getHours();
-    return h < 6 || h >= 18;
-  });
+  // Default to dark mode outside 06:00–18:00 local time.
+  // Initialise as false to match SSR; set correct value on client in useEffect.
+  const [isDark, setIsDark] = useState(false);
   const [calendarKey] = useState(0);
   const [showGithubQR, setShowGithubQR] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [isMobile, setIsMobile] = useState(false);
   const calendarRef = useRef<any>(null);
   const swipeStartX = useRef<number | null>(null);
 
@@ -87,6 +86,18 @@ export default function AgendaKiosk() {
   useEffect(() => {
     const tick = setInterval(() => setCurrentTime(new Date()), 30_000);
     return () => clearInterval(tick);
+  }, []);
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    setIsDark(h < 6 || h >= 18);
+  }, []);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   useEffect(() => {
@@ -283,20 +294,20 @@ export default function AgendaKiosk() {
     <div className={`min-h-screen font-sans transition-colors duration-300 ${d ? "bg-zinc-950 text-zinc-100" : "bg-[#f2f2f7] text-gray-900"}`}>
 
       {/* Header */}
-      <div className={`px-8 py-4 flex items-center gap-4 ${d ? "bg-zinc-950 border-b border-zinc-800" : "bg-white border-b border-stone-200 shadow-sm"}`}>
-        <img src="/logo.png" alt="Casa Vinteum" className="h-11 w-11 object-contain" />
-        <div className="flex-1">
-          <h1 className={`text-2xl font-bold tracking-tight ${d ? "bg-gradient-to-r from-green-400 via-lime-400 to-yellow-400 bg-clip-text text-transparent" : "text-gray-900"}`}>
+      <div className={`px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-3 sm:gap-4 ${d ? "bg-zinc-950 border-b border-zinc-800" : "bg-white border-b border-stone-200 shadow-sm"}`}>
+        <img src="/logo.png" alt="Casa Vinteum" className="h-8 w-8 sm:h-11 sm:w-11 object-contain flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <h1 className={`text-lg sm:text-2xl font-bold tracking-tight truncate ${d ? "bg-gradient-to-r from-green-400 via-lime-400 to-yellow-400 bg-clip-text text-transparent" : "text-gray-900"}`}>
             Agenda Casa Vinteum
           </h1>
-          <p className={`text-sm mt-0.5 ${d ? "text-zinc-500" : "text-gray-400"}`}>Bitcoin · São Paulo</p>
+          <p className={`text-xs sm:text-sm mt-0.5 ${d ? "text-zinc-500" : "text-gray-400"}`}>Bitcoin · São Paulo</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Botão GitHub — abre modal com QR code */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Botão GitHub — só no kiosk/desktop (QR não faz sentido no celular) */}
           <button
             onClick={() => setShowGithubQR(true)}
-            className={`p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
+            className={`hidden sm:flex p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
             title="Contribua no GitHub"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
@@ -307,26 +318,26 @@ export default function AgendaKiosk() {
           {/* Botão adicionar evento */}
           <button
             onClick={() => { setAdminAction("add"); setEventForm(emptyForm); setEditingEventId(null); setAdminStep("password"); setAdminError(""); }}
-            className={`p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
+            className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
             title="Adicionar evento"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Toggle dark/light */}
           <button
             onClick={() => setIsDark((v) => !v)}
-            className={`p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-yellow-400 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
+            className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-yellow-400 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
             title={d ? "Modo claro" : "Modo escuro"}
           >
-            {d ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {d ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
         </div>
       </div>
 
       {/* Calendar */}
       <div
-        className={`p-6 ${d ? "dark-theme" : ""}`}
+        className={`p-2 sm:p-6 ${d ? "dark-theme" : ""}`}
         onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (swipeStartX.current === null || !calendarRef.current) return;
@@ -343,13 +354,17 @@ export default function AgendaKiosk() {
             Carregando agenda...
           </div>
         ) : (
-          <div className={`rounded-2xl overflow-hidden ${d ? "bg-zinc-900" : "bg-white shadow-sm ring-1 ring-black/5"}`}>
+          <div className={`rounded-xl sm:rounded-2xl overflow-hidden ${d ? "bg-zinc-900" : "bg-white shadow-sm ring-1 ring-black/5"}`}>
             <FullCalendar
               key={calendarKey}
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
               initialView="listWeek"
-              headerToolbar={{
+              headerToolbar={isMobile ? {
+                left: "prev,next",
+                center: "title",
+                right: "dayGridMonth,listWeek",
+              } : {
                 left: "prev,next today",
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,listWeek",
@@ -368,7 +383,7 @@ export default function AgendaKiosk() {
                   Mande sua sugestão para <strong>casa21.btc@gmail.com</strong>
                 </div>
               )}
-              height="85vh"
+              height={isMobile ? "calc(100dvh - 64px)" : "85vh"}
               locale="pt-br"
               buttonText={{ today: "Hoje", month: "Mês", week: "Semana", list: "Lista" }}
             />
