@@ -56,7 +56,11 @@ export default function AgendaKiosk() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventModal | null>(null);
   const [showQR, setShowQR] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  // Default to dark mode outside 06:00–18:00 local time
+  const [isDark, setIsDark] = useState(() => {
+    const h = new Date().getHours();
+    return h < 6 || h >= 18;
+  });
   const [calendarKey] = useState(0);
   const calendarRef = useRef<any>(null);
 
@@ -312,7 +316,7 @@ export default function AgendaKiosk() {
               key={calendarKey}
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-              initialView="listWeek"
+              initialView="dayGridMonth"
               headerToolbar={{
                 left: "prev,next today",
                 center: "title",
