@@ -341,7 +341,7 @@ export default function AgendaKiosk() {
               key={calendarKey}
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
+              initialView="listWeek"
               headerToolbar={{
                 left: "prev,next today",
                 center: "title",
