@@ -369,10 +369,7 @@ export default function AgendaKiosk() {
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,listWeek",
               }}
-              footerToolbar={isMobile ? {
-                left: "today",
-                right: "dayGridMonth,listWeek",
-              } : false}
+              footerToolbar={false}
               views={{
                 dayGridMonth: {
                   displayEventTime: false,
