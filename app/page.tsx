@@ -373,6 +373,12 @@ export default function AgendaKiosk() {
                 left: "today",
                 right: "dayGridMonth,listWeek",
               } : false}
+              views={{
+                dayGridMonth: {
+                  displayEventTime: false,
+                  dayMaxEventRows: isMobile ? 3 : 4,
+                },
+              }}
               events={events}
               eventClick={openModal}
               eventClassNames={(arg) => {
