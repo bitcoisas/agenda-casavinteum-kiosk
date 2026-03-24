@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Moon, Plus, Sun, X, QrCode, Pencil, Trash2 } from "lucide-react";
+import { Moon, Plus, Sun, X, QrCode, Pencil, Trash2, CalendarPlus, MessageSquarePlus } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { CalendarPicker } from "./components/CalendarPicker";
 import { TimeWheelPicker } from "./components/TimeWheelPicker";
@@ -24,6 +24,42 @@ type EventModal = {
   external_url?: string;
   [key: string]: unknown;
 };
+
+function formatICSDate(d: Date) {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function downloadICS(event: EventModal) {
+  const start = event.start ? formatICSDate(event.start) : "";
+  const end = event.end
+    ? formatICSDate(event.end)
+    : event.start ? formatICSDate(new Date(event.start.getTime() + 3600000)) : "";
+  const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+  const stripHtml = (s: string) => s.replace(/<[^>]+>/g, "");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Casa Vinteum//Agenda//PT",
+    "BEGIN:VEVENT",
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${esc(event.title)}`,
+    event.description ? `DESCRIPTION:${esc(stripHtml(event.description as string))}` : "",
+    (event.location as any)?.name ? `LOCATION:${esc((event.location as any).name)}` : "",
+    event.url ? `URL:${event.url}` : "",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n");
+  const blob = new Blob([lines], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "evento.ics";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 function formatDateTime(date: Date | null) {
   if (!date) return "";
@@ -61,6 +97,10 @@ export default function AgendaKiosk() {
   const [isDark, setIsDark] = useState(false);
   const [calendarKey] = useState(0);
   const [showGithubQR, setShowGithubQR] = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [showICSQR, setShowICSQR] = useState(false);
+  const [showAllEventsQR, setShowAllEventsQR] = useState(false);
+  const [viewDates, setViewDates] = useState<{ start: Date; end: Date; type: string } | null>(null);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [isMobile, setIsMobile] = useState(false);
   const calendarRef = useRef<any>(null);
@@ -291,6 +331,7 @@ export default function AgendaKiosk() {
   function closeModal() {
     setSelectedEvent(null);
     setShowQR(false);
+    setShowICSQR(false);
   }
 
   const eventUrl = selectedEvent?.url as string | undefined;
@@ -324,14 +365,40 @@ export default function AgendaKiosk() {
             </svg>
           </button>
 
-          {/* Botão adicionar evento */}
+          {/* Botão adicionar eventos da visão atual ao calendário — só no desktop */}
+          {!isMobile && viewDates && (
+            <button
+              onClick={() => setShowAllEventsQR(true)}
+              className={`p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
+              title={
+                viewDates.type === "dayGridMonth" ? "Adicionar eventos do mês ao calendário"
+                : viewDates.type === "timeGridWeek" ? "Adicionar eventos da semana ao calendário"
+                : "Adicionar eventos da lista ao calendário"
+              }
+            >
+              <CalendarPlus className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Botão sugerir evento — mobile e desktop */}
           <button
-            onClick={() => { setAdminAction("add"); setEventForm(emptyForm); setEditingEventId(null); setAdminStep("password"); setAdminError(""); }}
+            onClick={() => setShowSuggest(true)}
             className={`p-2 sm:p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
-            title="Adicionar evento"
+            title="Sugerir evento"
           >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <MessageSquarePlus className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
+
+          {/* Botão adicionar evento — só no desktop */}
+          {!isMobile && (
+            <button
+              onClick={() => { setAdminAction("add"); setEventForm(emptyForm); setEditingEventId(null); setAdminStep("password"); setAdminError(""); }}
+              className={`p-2.5 rounded-full transition-colors cursor-pointer ${d ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700" : "bg-stone-100 text-gray-500 hover:bg-stone-200"}`}
+              title="Adicionar evento"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          )}
 
           {/* Toggle dark/light */}
           <button
@@ -386,6 +453,7 @@ export default function AgendaKiosk() {
                 },
               }}
               events={events}
+              datesSet={(info) => setViewDates({ start: info.start, end: info.end, type: info.view.type })}
               eventClick={openModal}
               eventClassNames={(arg) => {
                 const { start, end, allDay } = arg.event;
@@ -396,7 +464,13 @@ export default function AgendaKiosk() {
               noEventsContent={() => (
                 <div style={{ textAlign: "center", padding: "2rem 1rem", opacity: 0.55, fontSize: "0.9rem" }}>
                   Não temos eventos nesta data.<br />
-                  Mande sua sugestão para <strong>casa21.btc@gmail.com</strong>
+                  Que tal sugerir um?{" "}
+                  <button
+                    onClick={() => setShowSuggest(true)}
+                    style={{ textDecoration: "underline", cursor: "pointer", background: "none", border: "none", font: "inherit", fontWeight: "bold", opacity: 1, padding: 0 }}
+                  >
+                    Responda este formulário
+                  </button>
                 </div>
               )}
               height={isMobile ? "calc(100dvh - 64px)" : "85vh"}
@@ -472,21 +546,61 @@ export default function AgendaKiosk() {
                   </p>
                 </div>
               )}
+
+              {showICSQR && selectedEvent?.id && (
+                <div className={`mt-5 flex flex-col items-center gap-2 rounded-xl p-4 ${d ? "bg-zinc-800" : "bg-stone-50"}`}>
+                  <p className={`text-xs mb-1 ${d ? "text-zinc-500" : "text-gray-400"}`}>
+                    Aponte a câmera para adicionar ao calendário
+                  </p>
+                  <div className="bg-white p-3 rounded-lg">
+                    <QRCodeSVG value={`${window.location.origin}/api/events/ics?id=${selectedEvent.id}`} size={150} />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className={`px-6 pb-5 pt-2 border-t flex flex-col gap-3 ${d ? "border-zinc-800" : "border-stone-100"}`}>
+              {/* Ver QR Code do evento — linha de cima, largura total */}
+              {eventUrl && (
+                <button
+                  onClick={() => { setShowQR((v) => !v); setShowICSQR(false); }}
+                  className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${
+                    d
+                      ? "border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600"
+                      : "border-stone-200 text-gray-600 hover:bg-stone-50"
+                  }`}
+                >
+                  <QrCode className="w-4 h-4" />
+                  {showQR ? "Ocultar QR" : "Ver QR Code"}
+                </button>
+              )}
+
+              {/* Linha de baixo: Salvar no calendário + Fechar */}
               <div className="flex gap-3">
-                {eventUrl && (
+                {isMobile && selectedEvent?.start && (
                   <button
-                    onClick={() => setShowQR((v) => !v)}
+                    onClick={() => downloadICS(selectedEvent)}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${
                       d
                         ? "border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600"
                         : "border-stone-200 text-gray-600 hover:bg-stone-50"
                     }`}
                   >
-                    <QrCode className="w-4 h-4" />
-                    {showQR ? "Ocultar QR" : "Ver QR Code"}
+                    <CalendarPlus className="w-4 h-4" />
+                    Salvar no calendário
+                  </button>
+                )}
+                {!isMobile && selectedEvent?.id && (
+                  <button
+                    onClick={() => { setShowICSQR((v) => !v); setShowQR(false); }}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium cursor-pointer transition-colors ${
+                      d
+                        ? "border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-600"
+                        : "border-stone-200 text-gray-600 hover:bg-stone-50"
+                    }`}
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    {showICSQR ? "Ocultar" : "Salvar no calendário"}
                   </button>
                 )}
                 <button
@@ -568,6 +682,118 @@ export default function AgendaKiosk() {
               Fechar
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Modal: QR de todos os eventos da visão atual — só desktop */}
+      {showAllEventsQR && viewDates && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowAllEventsQR(false)}
+        >
+          <div
+            className={`relative rounded-2xl shadow-2xl max-w-xs w-full mx-4 p-6 border flex flex-col items-center gap-4 ${d ? "bg-zinc-900 border-zinc-800" : "bg-white border-stone-200"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAllEventsQR(false)}
+              className={`absolute top-3 right-3 rounded-full p-1.5 cursor-pointer ${d ? "text-zinc-400 hover:text-white" : "text-gray-400 hover:text-gray-700"}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <h2 className={`text-base font-bold text-center ${d ? "text-zinc-100" : "text-gray-900"}`}>
+              {viewDates.type === "dayGridMonth" ? "Eventos do mês" : "Eventos da semana"}
+            </h2>
+            <p className={`text-xs text-center ${d ? "text-zinc-400" : "text-gray-500"}`}>
+              Aponte a câmera do celular para adicionar todos os eventos ao calendário.
+            </p>
+            <div className="bg-white p-3 rounded-xl">
+              <QRCodeSVG
+                value={`${window.location.origin}/api/events/ics?start=${viewDates.start.toISOString()}&end=${viewDates.end.toISOString()}`}
+                size={180}
+              />
+            </div>
+            <button
+              onClick={() => setShowAllEventsQR(false)}
+              className={`w-full py-2.5 rounded-xl font-semibold text-sm cursor-pointer transition-opacity hover:opacity-90 ${
+                d ? "bg-gradient-to-r from-green-500 to-lime-400 text-zinc-950" : "bg-green-700 text-white"
+              }`}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: sugerir evento */}
+      {showSuggest && (
+        <div
+          className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm ${isMobile ? "flex items-end justify-center" : "flex items-center justify-center"}`}
+          onClick={() => setShowSuggest(false)}
+        >
+          {isMobile ? (
+            /* Mobile: bottom sheet com link */
+            <div
+              className={`relative w-full rounded-t-2xl shadow-2xl p-6 border-t flex flex-col gap-4 ${d ? "bg-zinc-900 border-zinc-800" : "bg-white border-stone-200"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowSuggest(false)}
+                className={`absolute top-3 right-3 rounded-full p-1.5 cursor-pointer ${d ? "text-zinc-400 hover:text-white" : "text-gray-400 hover:text-gray-700"}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div>
+                <h2 className={`text-lg font-bold ${d ? "text-zinc-100" : "text-gray-900"}`}>
+                  Sugerir um evento
+                </h2>
+                <p className={`text-sm mt-1 ${d ? "text-zinc-400" : "text-gray-500"}`}>
+                  Tem uma ideia de evento para a Casa Vinteum? Preencha o formulário e a gente avalia!
+                </p>
+              </div>
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLSdC1JJYiHPdEjoPUu7cc3IkfKvnicu1Oqd0aJcd7GL2dxY6vw/viewform"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm cursor-pointer transition-opacity hover:opacity-90 ${
+                  d ? "bg-gradient-to-r from-green-500 to-lime-400 text-zinc-950" : "bg-green-700 text-white"
+                }`}
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+                Preencher formulário de sugestão
+              </a>
+            </div>
+          ) : (
+            /* Desktop: modal centralizado com QR code */
+            <div
+              className={`relative rounded-2xl shadow-2xl max-w-xs w-full mx-4 p-6 border flex flex-col items-center gap-4 ${d ? "bg-zinc-900 border-zinc-800" : "bg-white border-stone-200"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowSuggest(false)}
+                className={`absolute top-3 right-3 rounded-full p-1.5 cursor-pointer ${d ? "text-zinc-400 hover:text-white" : "text-gray-400 hover:text-gray-700"}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <h2 className={`text-base font-bold ${d ? "text-zinc-100" : "text-gray-900"}`}>
+                Sugerir um evento
+              </h2>
+              <p className={`text-xs text-center ${d ? "text-zinc-400" : "text-gray-500"}`}>
+                Aponte a câmera do celular para preencher o formulário de sugestão.
+              </p>
+              <div className="bg-white p-3 rounded-xl">
+                <QRCodeSVG value="https://docs.google.com/forms/d/e/1FAIpQLSdC1JJYiHPdEjoPUu7cc3IkfKvnicu1Oqd0aJcd7GL2dxY6vw/viewform" size={180} />
+              </div>
+              <button
+                onClick={() => setShowSuggest(false)}
+                className={`w-full py-2.5 rounded-xl font-semibold text-sm cursor-pointer transition-opacity hover:opacity-90 ${
+                  d ? "bg-gradient-to-r from-green-500 to-lime-400 text-zinc-950" : "bg-green-700 text-white"
+                }`}
+              >
+                Fechar
+              </button>
+            </div>
+          )}
         </div>
       )}
 
