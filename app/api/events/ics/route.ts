@@ -1,12 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-
 /**
- * GET /api/events/ics?id=xxx          → ICS for a single event
- * GET /api/events/ics?start=ISO&end=ISO → ICS for all events in range
+ * GET /api/events/ics
  *
- * Returns a valid iCalendar (.ics) file that can be imported into any
- * calendar app (iOS Calendar, Google Calendar, etc.).
+ * Serves a valid iCalendar (.ics) file compatible with iOS Calendar,
+ * Google Calendar, and any RFC 5545-compliant calendar application.
+ *
+ * Query parameters (at least one required):
+ *  - id=<event-id>              Returns a single-event ICS.
+ *                               Use the FullCalendar event id as returned by
+ *                               /api/events ("evento-<n>" for evento.so events,
+ *                               UUID for manual events).
+ *  - start=<ISO>&end=<ISO>     Returns a multi-event ICS for all events whose
+ *                               start date falls within [start, end).
+ *
+ * Events are fetched from /api/events (internally) so this route always
+ * reflects the same merged data as the calendar UI.
+ *
+ * The QR codes displayed by the kiosk/desktop calendar export buttons point
+ * to this endpoint using window.location.origin as the base URL, meaning the
+ * generated QR codes work automatically in both local development and
+ * production — as long as the server is reachable from the scanning device.
+ *
+ * Returns 404 if no matching events are found.
  */
+
+import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url);
   const id = searchParams.get("id");
