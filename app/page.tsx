@@ -92,9 +92,7 @@ export default function AgendaKiosk() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventModal | null>(null);
   const [showQR, setShowQR] = useState(false);
-  // Default to dark mode outside 06:00–18:00 local time.
-  // Initialise as false to match SSR; set correct value on client in useEffect.
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [calendarKey] = useState(0);
   const [showGithubQR, setShowGithubQR] = useState(false);
   const [showSuggest, setShowSuggest] = useState(false);
@@ -128,10 +126,6 @@ export default function AgendaKiosk() {
     return () => clearInterval(tick);
   }, []);
 
-  useEffect(() => {
-    const h = new Date().getHours();
-    setIsDark(h < 6 || h >= 18);
-  }, []);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
