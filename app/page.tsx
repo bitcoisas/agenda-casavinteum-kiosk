@@ -102,10 +102,19 @@ export default function AgendaKiosk() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch("/api/events");
-      const data = await res.json();
-      setEvents(data);
-      setLoading(false);
+      try {
+        const res = await fetch("/api/events");
+        if (!res.ok) {
+          console.error(`[events] API retornou status ${res.status}`);
+        }
+        const data = await res.json();
+        console.log(`[events] ${data.length} eventos carregados`);
+        setEvents(data);
+      } catch (err) {
+        console.error("[events] Falha ao carregar eventos:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
     const interval = setInterval(load, 10 * 60 * 1000);
